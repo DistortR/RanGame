@@ -2,16 +2,23 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { sortGames } from './sort-games';
 
-export default function Library() {
+export default function Page() {
+  return <Suspense fallback={<main className="app-shell">Cargando biblioteca…</main>}><Library /></Suspense>;
+}
+
+function Library() {
   const searchParams = useSearchParams();
   const steamid = searchParams.get('steamid');
 
   const [library, setLibrary] = useState(null);
   const [selection, setSelection] = useState(null);
   const [imageError, setImageError] = useState(false);
+  const [sortOrder, setSortOrder] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
   const currentLibrary = library?.steamid === steamid;
   const games = currentLibrary && !library.error ? library.games : [];
   const loading = Boolean(steamid) && !currentLibrary;
@@ -126,7 +133,7 @@ export default function Library() {
 
         <div className="game-info" aria-live="polite">
           <p className="eyebrow"><span className="eyebrow-mark">↳</span> TU PRÓXIMO JUEGO</p>
-          <h2>{gameTitle}</h2>
+          <h2>{randomGame && !loading && !error ? <span className="game-list-name"><a className="game-title-link" style={{ fontSize: 'inherit', fontFamily: 'inherit' }} href={'https://store.steampowered.com/app/' + randomGame.appid + '/'} target="_blank" rel="noopener noreferrer">{gameTitle}</a></span> : gameTitle}</h2>
           <p className="game-description" role={loading ? 'status' : undefined}>{gameDescription}</p>
 
           {randomGame && !loading && !error && (
@@ -151,6 +158,45 @@ export default function Library() {
           <p className="pick-hint">Selección aleatoria entre tus juegos de Steam.</p>
         </div>
       </section>
+
+      {!loading && !error && games.length > 0 && (
+        <section className="game-library" aria-labelledby="game-library-title">
+          <div className="game-library-heading">
+            <div>
+              <p className="eyebrow"><span className="eyebrow-mark">03</span> TU COLECCIÓN</p>
+              <h2 id="game-library-title">Todos tus juegos<span>.</span></h2>
+            </div>
+            <span className="stat-label">{games.length.toLocaleString('es-MX')} JUEGOS</span>
+          </div>
+          <div className="game-sort" role="group" aria-label="Ordenar juegos">
+            <span className="stat-label">ORDENAR POR</span>
+            <button className={'button ' + (sortOrder === 'name' ? 'button-primary' : 'button-quiet')} type="button" aria-pressed={sortOrder === 'name'} onClick={() => setSortOrder('name')}>Nombre</button>
+            <button className={'button ' + (sortOrder === 'hours' ? 'button-primary' : 'button-quiet')} type="button" aria-pressed={sortOrder === 'hours'} onClick={() => setSortOrder('hours')}>Horas jugadas</button>
+            <div className="game-sort-direction" role="group" aria-label="Dirección del orden">
+              <button className={'button ' + (sortDirection === 'asc' ? 'button-primary' : 'button-quiet')} type="button" aria-label="Ascendente" aria-pressed={sortDirection === 'asc'} onClick={() => setSortDirection('asc')}>↑</button>
+              <button className={'button ' + (sortDirection === 'desc' ? 'button-primary' : 'button-quiet')} type="button" aria-label="Descendente" aria-pressed={sortDirection === 'desc'} onClick={() => setSortDirection('desc')}>↓</button>
+            </div>
+          </div>
+          <ul className="game-list">
+            {sortGames(games, sortOrder, sortDirection).map((game) => (
+              <li className="game-list-item" key={game.appid}>
+                <div className="game-list-name">
+                  <span className="game-list-icon" aria-hidden="true">↗</span>
+                  <div>
+                    <a href={'https://store.steampowered.com/app/' + game.appid + '/'} target="_blank" rel="noopener noreferrer">{game.name}</a>
+                    <span className="game-list-id">STEAM / {game.appid}</span>
+                  </div>
+                </div>
+                <div className="game-list-time">
+                  <span className="stat-label">TIEMPO JUGADO</span>
+                  <strong>{((game.playtime_forever || 0) / 60).toLocaleString('es-MX', { maximumFractionDigits: 1 })} h</strong>
+                  {game.playtime_2weeks > 0 && <span className="game-list-recent">{(game.playtime_2weeks / 60).toLocaleString('es-MX', { maximumFractionDigits: 1 })} h últimas 2 semanas</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <footer className="library-footer">
         <span>UNA BIBLIOTECA. INFINITAS POSIBILIDADES.</span>
