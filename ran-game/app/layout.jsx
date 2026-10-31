@@ -14,17 +14,17 @@ const inter = Inter({
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-jetbrains-mono',
 });
 
 export const metadata = {
-  title: 'Steam Roulette',
+  title: 'RanGame — Steam Roulette',
   description: 'Deja que el azar elija tu próxima partida',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es" className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="es" className={spaceGrotesk.variable + ' ' + inter.variable + ' ' + jetbrainsMono.variable}>
       <body className="bg-[#13151A] text-[#E8E6E1] font-body min-h-screen">
         {children}
       </body>
